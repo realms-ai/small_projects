@@ -2,6 +2,8 @@
 import psutil
 import subprocess
 import time
+import os
+from datetime import datetime
 
 LOWEST_BATTERY_THRESHOLD = 21       # %
 LOW_BATTERY_THRESHOLD = 81          # %
@@ -9,7 +11,7 @@ FULL_BATTERY_THRESHOLD = 98         # %
 MAX_FULL_DURATION = 90 * 60         # 90 minutes
 CHECK_INTERVAL = 60                 # seconds
 previous_plugged = None
-LOG_FILE = "/tmp/battery_alerter.log" 
+LOG_FILE = os.path.expanduser("/tmp/battery_alerter.log")
 
 zenity_process = None
 time_at_full = 0
@@ -17,8 +19,10 @@ mode = "normal"  # or 'waiting_discharge'
 
 def log_event(message):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    log_line = f"[{timestamp}] {message}"
+    print(log_line)
     with open(LOG_FILE, 'a') as f:
-        f.write(f"[{timestamp}] {message}\n")
+        f.write(log_line + '\n')
 
 def close_alert():
     global zenity_process
@@ -33,7 +37,8 @@ def close_alert():
 def show_alert(message):
     global zenity_process
     close_alert()
-    zenity_process = subprocess.Popen(['zenity', '--warning', '--text', message])
+    zenity_process = subprocess.Popen(['zenity', '--warning', '--timeout=10', '--text', message])
+
 
 while True:
     battery = psutil.sensors_battery()
